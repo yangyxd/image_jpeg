@@ -2,13 +2,7 @@
 
 Flutter plugin image encode jpeg.
 
-
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](https://flutter.io/).
-
-For help on editing plugin code, view the [documentation](https://flutter.io/platform-plugins/#edit-code).
+The compression and zoom plug-in before the image is uploaded. Use native code for processing.
 
 > Supported  Platforms
 > * Android
@@ -32,8 +26,6 @@ import 'package:image_jpeg/image_jpeg.dart';
         try {
           if (filesize > 1024 * 256) {
             // 大于256kb开始压缩
-            cancelWait = false;
-
             // scale image
             String newfile = await Tools.getDocumentsPath() + Tools.pathSeparator + tempfilename;
             newfile = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 70, JpgImageWidth, JpgImageHeigh);
