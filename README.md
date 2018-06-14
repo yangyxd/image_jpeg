@@ -13,7 +13,7 @@ The compression and zoom plug-in before the image is uploaded. Use native code f
 ```yaml
 # add this line to your dependencies
 image_jpeg:
-  git: https://github.com/yangyxd/image_jpeg
+  git: git://github.com/yangyxd/image_jpeg.git
 ```
 
 ```dart
