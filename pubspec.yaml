@@ -44,7 +44,7 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
-  #
+  #  flutter packages pub publish
   # For details regarding fonts in packages, see
   # https://flutter.io/custom-fonts/#from-packages
 
