@@ -5,8 +5,13 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
+
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -14,12 +19,18 @@ import java.io.FileOutputStream;
  * ImageJpegPlugin
  */
 public class ImageJpegPlugin implements MethodCallHandler {
+  private final Registrar mRegistrar;
+
   /**
    * Plugin registration.
    */
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "image_jpeg");
-    channel.setMethodCallHandler(new ImageJpegPlugin());
+    channel.setMethodCallHandler(new ImageJpegPlugin(registrar));
+  }
+
+  private ImageJpegPlugin(Registrar registrar) {
+    this.mRegistrar = registrar;
   }
 
   @Override
@@ -54,23 +65,66 @@ public class ImageJpegPlugin implements MethodCallHandler {
     }
   }
 
-  public static String compressImage(String filePath, String targetPath, int quality, int maxWidth, int maxHeight)  {
-    try {
-      Bitmap bm = getSmallBitmap(filePath, maxWidth, maxHeight);
-      File outputFile = new File(targetPath);
+  public String compressImage(String filePath, String targetPath, int quality, int maxWidth, int maxHeight)  {
+      Log.d("image_jpeg", String.format("srcfile: %s", filePath));
+      Log.d("image_jpeg", String.format("mw: %d, mh: %d, quality: %d, targetfile: %s", maxWidth, maxHeight, quality, targetPath));
 
+      try {
+        Bitmap bm = getSmallBitmap(filePath, maxWidth, maxHeight);
+        Log.d("image_jpeg", String.format("nw: %d, nh: %d", bm.getWidth(), bm.getHeight()));
+
+        File outputFile = getOutputFile(targetPath, true);
+
+        if (outputFile == null) {
+          return null;
+        }
+        FileOutputStream out = new FileOutputStream(outputFile);
+        bm.compress(Bitmap.CompressFormat.JPEG, quality, out);
+
+        Log.d("image_jpeg", String.format("targerSize: %d, outputfile: %s", out.getChannel().size(), outputFile.getPath()));
+
+        out.close();
+
+        return outputFile.getPath();
+
+      } catch (Exception e) {
+        Log.d("image_jpeg", e.getMessage());
+        return null;
+      }
+  }
+
+  public File getOutputFile(String afile, boolean canTry) {
+    try {
+      File outputFile = new File(afile);
       if (!outputFile.exists()) {
         outputFile.getParentFile().mkdirs();
       } else {
         outputFile.delete();
       }
-      FileOutputStream out = new FileOutputStream(outputFile);
-      bm.compress(Bitmap.CompressFormat.JPEG, quality, out);
-
-      return outputFile.getPath();
-    } catch (Exception e){
-      return null;
+      return  outputFile;
+    } catch (Exception e) {
+      if (!canTry)
+        return null;
+      String fileName = getFileName(afile);
+      File v = null;
+      try {
+        v = getOutputFile(mRegistrar.context().getCacheDir().getPath() + afile, false);
+        if (v != null) return v;
+        v = getOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + afile, false);
+      } catch (Exception e1) {
+        return null;
+      }
+      return v;
     }
+  }
+
+  public String getFileName(String pathandname){
+    int start=pathandname.lastIndexOf("/");
+    int end=pathandname.lastIndexOf(".");
+    if (start!=-1 && end!=-1)
+      return pathandname.substring(start+1, end);
+    else
+      return null;
   }
 
   public static Bitmap getSmallBitmap(String filePath, int maxWidth, int maxHeight) {
@@ -79,34 +133,20 @@ public class ImageJpegPlugin implements MethodCallHandler {
     BitmapFactory.decodeFile(filePath, options);
     options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight);
     options.inJustDecodeBounds = false;
+    Log.d("image_jpeg", String.format("outRatio: %d", options.inSampleSize));
     return BitmapFactory.decodeFile(filePath, options);
   }
 
   public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-//    final int height = options.outHeight;
-//    final int width = options.outWidth;
-//    int inSampleSize = 1;
-//    if (height > reqHeight || width > reqWidth) {
-//      final int heightRatio = Math.round((float) height / (float) reqHeight);
-//      final int widthRatio = Math.round((float) width / (float) reqWidth);
-//      inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
-//    }
-
     final int height = options.outHeight;
     final int width = options.outWidth;
     int inSampleSize = 1;
-
     if (height > reqHeight || width > reqWidth) {
-
-      final int halfHeight = height / 2;
-      final int halfWidth = width / 2;
-
-      // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-      // height and width larger than the requested height and width.
-      while ((halfHeight / inSampleSize) > reqHeight  && (halfWidth / inSampleSize) > reqWidth) {
-        inSampleSize *= 2;
-      }
-    }
+      final int heightRatio = Math.round((float) height / (float) reqHeight);
+      final int widthRatio = Math.round((float) width / (float) reqWidth);
+      inSampleSize = heightRatio > widthRatio ? heightRatio : widthRatio;
+      Log.d("image_jpeg", String.format("w: %d, h: %d, wRatio: %d, hRatio: %d", width, height, widthRatio, heightRatio));
+    };
     return inSampleSize;
   }
 
