@@ -123,22 +123,22 @@
     if (!isDir) {
         if (!isFile) {
             callback(@{
-                    @"file": @(fileName),
+                    @"file": fileName,
                     @"error": @("file doesn't exist or is not a file")
                 });
         } else {
             UIImage *image = [UIImage imageWithContentsOfFile:fileName];
 
             callback(@{
-                @"file": @(fileName),
-                @"width": @(image.size.width),
-                @"height": @(image.size.height),
+                @"file": fileName,
+                @"width": @((int) image.size.width),
+                @"height": @((int)image.size.height),
                 @"size": @([manager attributesOfItemAtPath:fileName error:nil].fileSize)
             });
         }
     } else {
         callback(@{
-            @"file": @(fileName),
+            @"file": fileName,
             @"error": @("file doesn't exist or is not a file")
         });
     }
