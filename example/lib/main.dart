@@ -92,7 +92,8 @@ class _MyAppState extends State<MyApp> {
       if (sv != null) {
         updateMsg("newfile: " + newfile);
         updateMsg("用时: ${t2 - t}ms \n原文件: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n新文件: ${getRollupSize(nv.size)}, ${nv.width}*${nv.height} \n压缩率: ${(nv.size / sv.size * 100).toStringAsFixed(2)}%");
-      }
+      } else
+        updateMsg("获取文件信息失败");
       //f.delete();
     }
   }
