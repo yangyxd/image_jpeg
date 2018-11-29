@@ -55,6 +55,9 @@
                                 message:@"Temporary file could not be created"
                                 details:nil]);
     }
+  } else if ([@"getImgInfo" isEqualToString:call.method]) {
+      NSString *srcPath = call.arguments[@"imageFile"];
+      [self getImgInfo:result fileName:srcPath];
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -108,6 +111,37 @@
   UIGraphicsEndImageContext();
 
   return scaledImage;
+}
+
+- (void) getImgInfo:(FlutterResult)callback
+    fileName: (NSString *) fileName {
+
+    NSFileManager *manager = [NSFileManager defaultManager];
+    BOOL isDir;
+    BOOL isFile = [manager fileExistsAtPath:fileName isDirectory:&isDir];
+
+    if (!isDir) {
+        if (!isFile) {
+            callback(@{
+                    @"file": @(fileName),
+                    @"error": @("file doesn't exist or is not a file")
+                });
+        } else {
+            UIImage *image = [UIImage imageWithContentsOfFile:fileName];
+
+            callback(@{
+                @"file": @(fileName),
+                @"width": @(image.size.width),
+                @"height": @(image.size.height),
+                @"size": @([manager attributesOfItemAtPath:fileName error:nil].fileSize)
+            });
+        }
+    } else {
+        callback(@{
+            @"file": @(fileName),
+            @"error": @("file doesn't exist or is not a file")
+        });
+    }
 }
 
 @end

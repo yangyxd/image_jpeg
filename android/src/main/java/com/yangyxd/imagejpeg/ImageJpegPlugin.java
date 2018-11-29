@@ -14,6 +14,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.HashMap;
 
 /**
  * ImageJpegPlugin
@@ -36,6 +37,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
   @Override
   public void onMethodCall(MethodCall call, Result result) {
     if (call.method.equals("encodeJpeg")) {
+      // 压缩图像
       String srcPath = call.argument("srcPath");
       String targetPath = call.argument("targetPath");
       int quality = call.argument("quality");
@@ -60,6 +62,10 @@ public class ImageJpegPlugin implements MethodCallHandler {
         result.error("Encode Jpeg Failed", null, null);
       else
         result.success(newPath);
+
+    } else if (call.method.equals("getImgInfo")) {
+      String imageFile = call.argument("imageFile");
+      this.getImgInfo(result, imageFile);
     } else {
       result.notImplemented();
     }
@@ -148,6 +154,29 @@ public class ImageJpegPlugin implements MethodCallHandler {
       Log.d("image_jpeg", String.format("w: %d, h: %d, wRatio: %d, hRatio: %d", width, height, widthRatio, heightRatio));
     };
     return inSampleSize;
+  }
+
+  public void getImgInfo(Result successResult, String fileName) {
+    HashMap map = new HashMap();
+    map.put("file", fileName);
+    try {
+      File f = new File(fileName);
+      final BitmapFactory.Options options = new BitmapFactory.Options();
+      options.inJustDecodeBounds = true;
+      if (f.exists() && f.isFile()) {
+        map.put("size", f.length());
+        map.put("lastModified", f.lastModified());
+        BitmapFactory.decodeFile(fileName, options);
+        map.put("width", options.outWidth);
+        map.put("height", options.outHeight);
+      } else {
+        map.put("error", "file doesn't exist or is not a file");
+      }
+      successResult.success(map);
+    } catch (Exception e) {
+      map.put("error", e.getMessage());
+      successResult.success(map);
+    }
   }
 
 }

@@ -15,7 +15,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  String _hintMsg = '';
+  String _newfile;
 
   @override
   void initState() {
@@ -30,11 +31,38 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: new Center(
-          child: InkWell(
-            child: Text('选择图片'),
-            onTap: () {
-              _selectImage();
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              SizedBox(height: 16.0),
+              RaisedButton(onPressed: () {
+                _selectImage();
+              }, child: Text('选择图片')),
+              SizedBox(height: 8.0),
+              Text("$_hintMsg", style: TextStyle(
+                color: Colors.black,
+                fontSize: 11.0,
+                fontWeight: FontWeight.w300,
+                shadows: [
+                  Shadow(blurRadius: 4.0),
+                ]
+              )),
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.all(8.0),
+                  width: double.infinity,
+                  child: _newfile == null ? null : Image.file(
+                    File(_newfile),
+                  ),
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.black12,
+                        width: 0.5,
+                      )
+                  ),
+                ),
+              )
+            ],
           ),
         ),
       ),
@@ -52,16 +80,29 @@ class _MyAppState extends State<MyApp> {
     String newfile = null;
     //print("newfile: " + newfile);
     print("srcfile: " + imageFile.path);
-    newfile = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 70, 1920, 1920);
+    var t = new DateTime.now().millisecondsSinceEpoch;
+    newfile = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 65, 1360, 1360);
+    var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (newfile == null || newfile.isEmpty) {
-      print("无效的图像文件");
+      updateMsg("无效的图像文件");
     } else {
-      File f = new File(newfile);
-      print("newfile: " + newfile);
-      print("原文件大小: ${getRollupSize(imageFile.lengthSync())}, 新文件大小: ${getRollupSize(f.lengthSync())}");
+      _newfile = newfile;
+      var sv = await ImageJpeg.getInfo(imageFile.path);
+      var nv = await ImageJpeg.getInfo(newfile);
+      if (sv != null) {
+        updateMsg("newfile: " + newfile);
+        updateMsg("用时: ${t2 - t}ms \n原文件: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n新文件: ${getRollupSize(nv.size)}, ${nv.width}*${nv.height} \n压缩率: ${(nv.size / sv.size * 100).toStringAsFixed(2)}%");
+      }
+      //f.delete();
     }
   }
 
+  void updateMsg(final String msg) {
+    print(msg);
+    setState(() {
+      _hintMsg = msg;
+    });
+  }
 
   static const RollupSize_Units = ["GB", "MB", "KB", "B"];
   /// 返回文件大小字符串
