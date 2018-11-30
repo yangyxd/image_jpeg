@@ -18,7 +18,7 @@ To use this plugin, add `image_jpeg` as a dependency in your `pubspec.yaml` file
 
 ## Examples
 
-  * [Counter App](https://github.com/yangyxd/image_jpeg/tree/master/example) - Demonstrates how to use the image_jpeg plugin.
+  * [Examples App](https://github.com/yangyxd/image_jpeg/tree/master/example) - Demonstrates how to use the image_jpeg plugin.
 
 ```dart
 import 'package:image_jpeg/image_jpeg.dart';
