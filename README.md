@@ -1,5 +1,9 @@
 # image_jpeg
 
+[![pub package](https://img.shields.io/pub/v/image_jpeg.svg)](https://pub.dartlang.org/packages/image_jpeg)
+![GitHub](https://img.shields.io/github/license/OpenFlutter/image_jpeg.svg)
+[![GitHub stars](https://img.shields.io/github/stars/OpenFlutter/image_jpeg.svg?style=social&label=Stars)](https://github.com/OpenFlutter/image_jpeg)
+
 Flutter plugin image encode jpeg. The compression and zoom plug-in before the image is uploaded. Use native code for processing.
 
 ## Usage
