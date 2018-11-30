@@ -1,12 +1,17 @@
 # image_jpeg
 
-Flutter plugin image encode jpeg.
-
-The compression and zoom plug-in before the image is uploaded. Use native code for processing.
+Flutter plugin image encode jpeg. The compression and zoom plug-in before the image is uploaded. Use native code for processing.
 
 > Supported  Platforms
 > * Android
 > * IOS
+
+## ROADMAP
+
+* [x] Compressed to JPEG
+* [x] Image Zoom
+* [x] Get image information (width, height, fileSize, lastModified)
+* [ ] Gaussian Blur
 
 ## How to Use
 
