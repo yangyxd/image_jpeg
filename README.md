@@ -2,9 +2,8 @@
 
 Flutter plugin image encode jpeg. The compression and zoom plug-in before the image is uploaded. Use native code for processing.
 
-> Supported  Platforms
-> * Android
-> * IOS
+## Usage
+To use this plugin, add image_jpeg as a dependency in your pubspec.yaml file.
 
 ## ROADMAP
 
@@ -12,6 +11,10 @@ Flutter plugin image encode jpeg. The compression and zoom plug-in before the im
 * [x] Image Zoom
 * [x] Get image information (width, height, fileSize, lastModified)
 * [ ] Gaussian Blur
+
+> Supported  Platforms
+> * Android
+> * IOS
 
 ## How to Use
 
