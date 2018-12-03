@@ -6,6 +6,7 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
+import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -121,7 +122,6 @@ public class ImageJpegPlugin implements MethodCallHandler {
       }
 
     } else if ("encodeImageWithRes".equals(method)) {
-
       try {
         List<Object> args = (List<Object>) call.arguments;
         String resName = (String) args.get(0);
@@ -132,7 +132,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
         int blur = (int) args.get(5);
         int blurZoom = (int) args.get(6);
         String resType = null;
-        if (args.size() >= 8) {
+        if (args.size() > 7) {
           resType = (String) args.get(7);
         }
         if (resType == null || resType.length() == 0)
@@ -147,6 +147,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
         result.success(compressResImage(resName, resType, packageName, quality, maxWidth, maxHeight, rotate, blur, blurZoom));
       } catch (Exception e) {
         e.printStackTrace();
+        //Toast.makeText(mRegistrar.activity(), e.getMessage(), Toast.LENGTH_LONG).show();
         result.success(null);
       }
 
@@ -160,7 +161,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
           resType = "mipmap";
         String packageName = mRegistrar.activity().getPackageName();
         Resources res = mRegistrar.activity().getResources();
-        int id = getResID(res, resName, resType, packageName);
+        int id = res.getIdentifier(resName, resType, packageName);
         if (id != 0) {
           InputStream is = res.openRawResource(id);
           ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -233,14 +234,13 @@ public class ImageJpegPlugin implements MethodCallHandler {
     }
   }
 
-  public byte[] compressResImage(String resName, String resType, String packageName, int quality, int maxWidth, int maxHeight, int rotate, int blur, int blurZoom)  {
-    try {
+  public byte[] compressResImage(String resName, String resType, String packageName, int quality, int maxWidth, int maxHeight, int rotate, int blur, int blurZoom) throws IOException {
       Resources res = mRegistrar.activity().getResources();
-      int id = getResID(res, resName, resType, packageName);
-      if (id == 0) return null;
+      int id = res.getIdentifier(resName, resType, packageName); //getResID(res, resName, resType, packageName);
+      if (id == 0) throw new IOException("No resources found");
 
       Bitmap bm = getSmallBitmap(res, id, maxWidth, maxHeight);
-      if (bm == null) return null;
+      if (bm == null) throw new IOException("Bitmap is null");
       // 旋转处理
       bm = rotateImage(bm, rotate);
       // 高斯模糊
@@ -250,10 +250,6 @@ public class ImageJpegPlugin implements MethodCallHandler {
       bm.compress(Bitmap.CompressFormat.JPEG, quality, out);
       bm = null;
       return out.toByteArray();
-    } catch (Exception e) {
-      Log.d("image_jpeg", e.getMessage());
-      return null;
-    }
   }
 
   public Bitmap rotateImage(Bitmap bm, int rotate) {
@@ -352,22 +348,20 @@ public class ImageJpegPlugin implements MethodCallHandler {
     return BitmapFactory.decodeByteArray(buffer, 0, buffer.length);
   }
 
-  public static Bitmap getSmallBitmap(Resources res, int resId, int maxWidth, int maxHeight) {
-    InputStream _is = res.openRawResource(resId);
-    try {
+  public static Bitmap getSmallBitmap(Resources res, int resId, int maxWidth, int maxHeight) throws IOException {
       final BitmapFactory.Options options = new BitmapFactory.Options();
       if (maxWidth > 0 && maxHeight > 0) {
+        InputStream _is = res.openRawResource(resId);
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeStream(_is, null, options);
         options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight);
+        _is.close();
       }
+      InputStream _is = res.openRawResource(resId);
       options.inJustDecodeBounds = false;
       Bitmap bm = BitmapFactory.decodeStream(_is, null, options);
       _is.close();
       return bm;
-    } catch (IOException e) {
-      return null;
-    }
   }
 
   public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -422,10 +416,12 @@ public class ImageJpegPlugin implements MethodCallHandler {
     HashMap map = new HashMap();
     map.put("resId", resId);
     try {
-      final BitmapFactory.Options options = new BitmapFactory.Options();
-      options.inJustDecodeBounds = true;
       if (resId != 0) {
-        map.put("size", res.openRawResourceFd(resId).getLength());
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        AssetFileDescriptor af = res.openRawResourceFd(resId);
+        map.put("size", af.getLength());
+        af.close();
         InputStream is = res.openRawResource(resId);
         BitmapFactory.decodeStream(is, null, options);
         is.close();

@@ -33,6 +33,7 @@ class ImageJpeg {
       blur,
       blurZoom
     ]);
+    if (result == null) return null;
     return convertDynamic(result);
   }
 
@@ -48,6 +49,7 @@ class ImageJpeg {
       blurZoom,
       resType,
     ]);
+    if (result == null) return null;
     return convertDynamic(result);
   }
 
@@ -122,4 +124,8 @@ class ImageInfo {
   final int lastModified;
   final String error;
   const ImageInfo({this.width, this.height, this.size, this.resId, this.lastModified, this.error});
+  @override
+  String toString() {
+    return "{width: $width, heigh: $height, size: $size, resId: $resId, error: $error}";
+  }
 }

@@ -6,10 +6,13 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:image_jpeg/image_jpeg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:zoomable_image/zoomable_image.dart';
 import 'dart:io';
 
 
-void main() => runApp(new MyApp());
+void main() => runApp(new MaterialApp(
+  home: MyApp(),
+));
 
 class MyApp extends StatefulWidget {
   @override
@@ -32,6 +35,9 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    var image = imgbuffer != null && !imgbuffer.isEmpty ? MemoryImage(imgbuffer) :
+      _newfile == null ? null : FileImageEx(File(_newfile));
+
     return new MaterialApp(
       home: new Scaffold(
         appBar: new AppBar(
@@ -114,17 +120,21 @@ class _MyAppState extends State<MyApp> {
               ),
               SizedBox(height: 0.0),
               Expanded(
-                child: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  width: double.infinity,
-                  child: imgbuffer != null && !imgbuffer.isEmpty ? Image.memory(imgbuffer) :
-                    _newfile == null ? null : Image(image: FileImageEx(File(_newfile))),
-                  decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.black12,
-                        width: 0.5,
-                      )
+                child: GestureDetector(
+                  child: Container(
+                    margin: const EdgeInsets.all(2.0),
+                    width: double.infinity,
+                    child: image == null ? null : Image(image: image),
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.black12,
+                          width: 0.5,
+                        )
+                    ),
                   ),
+                  onTap: imgbuffer == null && _newfile == null ? null : () {
+                    _openNewPage(image);
+                  },
                 ),
               )
             ],
@@ -134,12 +144,29 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  void _openNewPage(ImageProvider image) {
+    Navigator.push(context, MaterialPageRoute(
+      builder: (context) {
+          return new Scaffold(
+            body: ZoomableImage(
+                image,
+                placeholder: const Center(child: const CircularProgressIndicator()),
+                backgroundColor: Colors.black,
+                onTap: () {
+                  Navigator.pop(context);
+                },
+            ),
+          );
+        },
+    ));
+  }
+
   _deleteLastFile(String newfile) {
     if (_newfile != null && _newfile != newfile) {
       File f = new File(_newfile);
       f.delete();
-      _newfile = newfile;
     }
+    _newfile = newfile;
   }
 
   _selectImage() async {
@@ -150,11 +177,9 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
-    String newfile = null;
-    //print("newfile: " + newfile);
     print("srcfile: " + imageFile.path);
     var t = new DateTime.now().millisecondsSinceEpoch;
-    newfile = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 65, 1360, 1360, _roate ? 90 : 0,
+    String newfile = await ImageJpeg.encodeJpeg(imageFile.path, null, 65, 1360, 1360, _roate ? 90 : 0,
         _blur ? (blurValue * 100).toInt() : 0, (blurZomm * 10).toInt());
     var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (newfile == null || newfile.isEmpty) {
@@ -193,21 +218,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   _encodeResImage() async {
-    var t = new DateTime.now().millisecondsSinceEpoch;
-    List<int> data = await ImageJpeg.encodeImageWithRes("test", 70, 'drawable', 1000, 1000, _roate ? 90 : 0,
-        _blur ? (blurValue * 100).toInt() : 0, (blurZomm * 10).toInt());
-    var t2 = new DateTime.now().millisecondsSinceEpoch;
-    if (data == null || data.isEmpty) {
-      updateMsg("无效的图像文件");
-    } else {
-      _deleteLastFile(null);
-      imgbuffer = ImageJpeg.convertToUint8List(data);
-      var sv = await ImageJpeg.getResImageInfo("test", "drawable");
-      if (sv != null)
-        updateMsg("用时: ${t2 - t}ms \n资源ID: ${sv.resId} \n图像大小: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n输出大小: ${getRollupSize(data == null ? 0 : data.length)}");
-      else
-        updateMsg("获取文件信息失败");
-    }
+      var t = new DateTime.now().millisecondsSinceEpoch;
+      List<int> data = await ImageJpeg.encodeImageWithRes("test", 70, 'drawable', 1000, 1000, _roate ? 90 : 0,
+          _blur ? (blurValue * 100).toInt() : 0, (blurZomm * 10).toInt());
+      var t2 = new DateTime.now().millisecondsSinceEpoch;
+      if (data == null || data.isEmpty) {
+        updateMsg("无效的图像文件");
+      } else {
+        _deleteLastFile(null);
+        imgbuffer = ImageJpeg.convertToUint8List(data);
+        var sv = await ImageJpeg.getResImageInfo("test", "drawable");
+        if (sv != null)
+          updateMsg("用时: ${t2 - t}ms \n资源ID: ${sv.resId} \n图像大小: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n输出大小: ${getRollupSize(data == null ? 0 : data.length)}");
+        else
+          updateMsg("获取文件信息失败");
+      }
   }
 
   _loadResImage() async {
