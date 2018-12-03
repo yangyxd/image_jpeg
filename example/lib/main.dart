@@ -22,6 +22,8 @@ class _MyAppState extends State<MyApp> {
   bool _roate = false;
   bool _blur = false;
   Uint8List imgbuffer;
+  double blurValue = 1.0;
+  double blurZomm = 1.0;
 
   @override
   void initState() {
@@ -65,6 +67,7 @@ class _MyAppState extends State<MyApp> {
                 children: <Widget>[
                   SizedBox(width: 16.0),
                   Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
                       RaisedButton(onPressed: () {
                         _blurImage();
@@ -77,15 +80,35 @@ class _MyAppState extends State<MyApp> {
                       }, child: Text('加载资源')),
                     ],
                   ),
-                  SizedBox(width: 16.0),
-                  Text("$_hintMsg", style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 11.0,
-                      fontWeight: FontWeight.w300,
-                      shadows: [
-                        Shadow(blurRadius: 4.0),
-                      ]
-                  )),
+                  SizedBox(width: 8.0),
+                  Column(
+                    children: <Widget>[
+                      Slider(
+                        value: blurValue,
+                        onChanged: (v) {
+                          setState(() {
+                            blurValue = v;
+                          });
+                        },
+                      ),
+                      Slider(
+                        value: blurZomm,
+                        onChanged: (v) {
+                          setState(() {
+                            blurZomm = v;
+                          });
+                        },
+                      ),
+                      Text("$_hintMsg", style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 11.0,
+                          fontWeight: FontWeight.w300,
+                          shadows: [
+                            Shadow(blurRadius: 4.0),
+                          ]
+                      ))
+                    ],
+                  ),
                   SizedBox(width: 4.0),
                 ],
               ),
@@ -111,6 +134,14 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  _deleteLastFile(String newfile) {
+    if (_newfile != null && _newfile != newfile) {
+      File f = new File(_newfile);
+      f.delete();
+      _newfile = newfile;
+    }
+  }
+
   _selectImage() async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
@@ -123,16 +154,13 @@ class _MyAppState extends State<MyApp> {
     //print("newfile: " + newfile);
     print("srcfile: " + imageFile.path);
     var t = new DateTime.now().millisecondsSinceEpoch;
-    newfile = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 65, 1360, 1360, _roate ? 90 : 0, _blur ? 100 : 0, 4);
+    newfile = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 65, 1360, 1360, _roate ? 90 : 0,
+        _blur ? (blurValue * 100).toInt() : 0, (blurZomm * 10).toInt());
     var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (newfile == null || newfile.isEmpty) {
       updateMsg("无效的图像文件");
     } else {
-      if (_newfile != null && _newfile != newfile) {
-        File f = new File(_newfile);
-        f.delete();
-      }
-      _newfile = newfile;
+      _deleteLastFile(newfile);
       imgbuffer = null;
       var sv = await ImageJpeg.getInfo(imageFile.path);
       var nv = await ImageJpeg.getInfo(newfile);
@@ -149,12 +177,12 @@ class _MyAppState extends State<MyApp> {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
     print("srcfile: " + imageFile.path);
     var t = new DateTime.now().millisecondsSinceEpoch;
-    List<int> data = await ImageJpeg.blurImageWithFlie(imageFile.path, 100, 4, _roate ? 90 : 0);
+    List<int> data = await ImageJpeg.blurImageWithFlie(imageFile.path, (blurValue * 100).toInt(), (blurZomm * 10).toInt(), _roate ? 100 : 0);
     var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (data == null || data.isEmpty) {
       updateMsg("无效的图像文件");
     } else {
-      _newfile = null;
+      _deleteLastFile(null);
       imgbuffer = ImageJpeg.convertToUint8List(data);
       var sv = await ImageJpeg.getInfo(imageFile.path);
       if (sv != null)
@@ -166,14 +194,15 @@ class _MyAppState extends State<MyApp> {
 
   _encodeResImage() async {
     var t = new DateTime.now().millisecondsSinceEpoch;
-    List<int> data = await ImageJpeg.encodeImageWithRes("test", 70, '', 1000, 1000, _roate ? 90 : 0, _blur ? 100 : 0, 4);
+    List<int> data = await ImageJpeg.encodeImageWithRes("test", 70, 'drawable', 1000, 1000, _roate ? 90 : 0,
+        _blur ? (blurValue * 100).toInt() : 0, (blurZomm * 10).toInt());
     var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (data == null || data.isEmpty) {
       updateMsg("无效的图像文件");
     } else {
-      _newfile = null;
+      _deleteLastFile(null);
       imgbuffer = ImageJpeg.convertToUint8List(data);
-      var sv = await ImageJpeg.getResImageInfo("test");
+      var sv = await ImageJpeg.getResImageInfo("test", "drawable");
       if (sv != null)
         updateMsg("用时: ${t2 - t}ms \n资源ID: ${sv.resId} \n图像大小: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n输出大小: ${getRollupSize(data == null ? 0 : data.length)}");
       else
@@ -188,9 +217,9 @@ class _MyAppState extends State<MyApp> {
     if (data == null || data.isEmpty) {
       updateMsg("无效的图像文件");
     } else {
-      _newfile = null;
+      _deleteLastFile(null);
       imgbuffer = ImageJpeg.convertToUint8List(data);
-      var sv = await ImageJpeg.getResImageInfo("test");
+      var sv = await ImageJpeg.getResImageInfo("ic_launcher");
       if (sv != null)
         updateMsg("用时: ${t2 - t}ms \n资源ID: ${sv.resId} \n图像大小: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n输出大小: ${getRollupSize(data == null ? 0 : data.length)}");
       else

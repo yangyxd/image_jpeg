@@ -6,8 +6,6 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
-import android.content.Context;
-import android.content.RestrictionsManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,14 +18,11 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
 import android.util.Log;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -176,6 +171,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
             if (len < buffer.length)
               break;
           }
+          is.close();
           result.success(bs.toByteArray());
         } else
           result.success(null);
@@ -244,6 +240,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
       if (id == 0) return null;
 
       Bitmap bm = getSmallBitmap(res, id, maxWidth, maxHeight);
+      if (bm == null) return null;
       // 旋转处理
       bm = rotateImage(bm, rotate);
       // 高斯模糊
@@ -251,6 +248,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       bm.compress(Bitmap.CompressFormat.JPEG, quality, out);
+      bm = null;
       return out.toByteArray();
     } catch (Exception e) {
       Log.d("image_jpeg", e.getMessage());
@@ -355,15 +353,21 @@ public class ImageJpegPlugin implements MethodCallHandler {
   }
 
   public static Bitmap getSmallBitmap(Resources res, int resId, int maxWidth, int maxHeight) {
-    InputStream is = res.openRawResource(resId);
-    final BitmapFactory.Options options = new BitmapFactory.Options();
-    if (maxWidth > 0 && maxHeight > 0) {
-      options.inJustDecodeBounds = true;
-      BitmapFactory.decodeStream(is, null, options);
-      options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight);
+    InputStream _is = res.openRawResource(resId);
+    try {
+      final BitmapFactory.Options options = new BitmapFactory.Options();
+      if (maxWidth > 0 && maxHeight > 0) {
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(_is, null, options);
+        options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight);
+      }
+      options.inJustDecodeBounds = false;
+      Bitmap bm = BitmapFactory.decodeStream(_is, null, options);
+      _is.close();
+      return bm;
+    } catch (IOException e) {
+      return null;
     }
-    options.inJustDecodeBounds = false;
-    return BitmapFactory.decodeStream(is, null, options);
   }
 
   public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -424,6 +428,7 @@ public class ImageJpegPlugin implements MethodCallHandler {
         map.put("size", res.openRawResourceFd(resId).getLength());
         InputStream is = res.openRawResource(resId);
         BitmapFactory.decodeStream(is, null, options);
+        is.close();
         map.put("width", options.outWidth);
         map.put("height", options.outHeight);
       } else {
