@@ -219,7 +219,8 @@ class _MyAppState extends State<MyApp> {
 
   _encodeResImage() async {
       var t = new DateTime.now().millisecondsSinceEpoch;
-      List<int> data = await ImageJpeg.encodeImageWithRes("test", 70, 'drawable', 1000, 1000, _roate ? 90 : 0,
+      var resName = Platform.isIOS ? "test.jpg" : "test";
+      List<int> data = await ImageJpeg.encodeImageWithRes(resName, 70, 'drawable', 1000, 1000, _roate ? 90 : 0,
           _blur ? (blurValue * 100).toInt() : 0, (blurZomm * 10).toInt());
       var t2 = new DateTime.now().millisecondsSinceEpoch;
       if (data == null || data.isEmpty) {
@@ -227,7 +228,7 @@ class _MyAppState extends State<MyApp> {
       } else {
         _deleteLastFile(null);
         imgbuffer = ImageJpeg.convertToUint8List(data);
-        var sv = await ImageJpeg.getResImageInfo("test", "drawable");
+        var sv = await ImageJpeg.getResImageInfo(resName, "drawable");
         if (sv != null)
           updateMsg("用时: ${t2 - t}ms \n资源ID: ${sv.resId} \n图像大小: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n输出大小: ${getRollupSize(data == null ? 0 : data.length)}");
         else
@@ -237,14 +238,15 @@ class _MyAppState extends State<MyApp> {
 
   _loadResImage() async {
     var t = new DateTime.now().millisecondsSinceEpoch;
-    List<int> data = await ImageJpeg.loadResFile("ic_launcher");
+    var resName = Platform.isIOS ? "test" : "ic_launcher";
+    List<int> data = await ImageJpeg.loadResFile(resName);
     var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (data == null || data.isEmpty) {
       updateMsg("无效的图像文件");
     } else {
       _deleteLastFile(null);
       imgbuffer = ImageJpeg.convertToUint8List(data);
-      var sv = await ImageJpeg.getResImageInfo("ic_launcher");
+      var sv = await ImageJpeg.getResImageInfo(resName);
       if (sv != null)
         updateMsg("用时: ${t2 - t}ms \n资源ID: ${sv.resId} \n图像大小: ${getRollupSize(sv.size)}, ${sv.width}*${sv.height} \n输出大小: ${getRollupSize(data == null ? 0 : data.length)}");
       else

@@ -57,7 +57,7 @@
 
     // 旋转
     if (rotate % 360 != 0){
-        image = [image rotate: rotate];
+        image = [self rotate: image rotate: rotate];
     }
 
     // 高斯模糊
@@ -152,17 +152,12 @@
     }
   }
 
-  UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, 1.0);
-  [image drawInRect:CGRectMake(0, 0, width, height)];
-
-  UIImage *scaledImage = UIGraphicsGetImageFromCurrentImageContext();
-  UIGraphicsEndImageContext();
-
-  return scaledImage;
+  return [self scaleImageWithMP: image w:width h:height];
 }
 
-- (UIImage *)rotate:(CGFloat) rotate {
-    return [self imageRotatedByDegrees:self deg:rotate];
+- (UIImage *)rotate:(UIImage*)image
+             rotate:(CGFloat) rotate {
+    return [self imageRotatedByDegrees: image deg:rotate];
 }
 
 - (UIImage *)imageRotatedByDegrees:(UIImage*)oldImage deg:(CGFloat)degrees{
@@ -192,37 +187,36 @@
 - (UIImage *)blurImage:(UIImage*)image blur:(CGFloat)blur blurZoom:(CGFloat)blurZoom {
     double aw = image.size.width;
     double ah = image.size.height;
-    UIImage *tempImg = image;
     if (blurZoom > 0) {
-        tempImg = [self scaleImageWithMP:image w:aw / blurZoom h:ah / blurZoom];
+        image = [self scaleImageWithMP:image w:(aw / blurZoom) h:(ah / blurZoom)];
     }
 
     blur = blur / 100.0f * 25.0f;
-    if (blur > 25.0f)
-        blur = 25.0f;
+    if (blur > 25.0f)  blur = 25.0f;
 
     CIContext *context = [CIContext contextWithOptions:nil];
-    CIImage *inputImage = [CIImage imageWithCGImage:tempImg.CGImage];
+    CIImage *inputImage = [CIImage imageWithCGImage:image.CGImage];
 
     CIFilter *filter = [CIFilter filterWithName:@"CIGaussianBlur"];
     [filter setValue:inputImage forKey:kCIInputImageKey];
-    [filter setValue:[NSNumber numberWithFloat:@(blur)] forKey:@"inputRadius"];
+    NSNumber *number = [NSNumber numberWithFloat:blur];
+    [filter setValue:number forKey:@"inputRadius"];
+    
     CIImage *result = [filter valueForKey:kCIOutputImageKey];
-
     CGImageRef cgImage = [context createCGImage:result fromRect:[inputImage extent]];
 
     UIImage *returnImage = [UIImage imageWithCGImage:cgImage];
     CGImageRelease(cgImage);
 
     if (blurZoom > 0) {
-        returnImage = [self scaleImageWithMP:image w:aw h:ah];
-    }
-    return returnImage;
+        return [self scaleImageWithMP:returnImage w:aw h:ah];
+    } else
+        return returnImage;
 }
 
 - (UIImage *) scaleImageWithMP: (UIImage*) image  w:(CGFloat) w  h:(CGFloat) h {
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), NO, 1.0);
-    [theImage drawInRect:CGRectMake(0, 0, w, h)];
+    [image drawInRect:CGRectMake(0, 0, w, h)];
 
     UIImage *scaledImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
