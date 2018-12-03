@@ -13,8 +13,10 @@ To use this plugin, add `image_jpeg` as a dependency in your `pubspec.yaml` file
 
 * [x] Compressed to JPEG
 * [x] Image Zoom
+* [x] Image Rotate
 * [x] Get image information (width, height, fileSize, lastModified)
-* [ ] Gaussian Blur
+* [x] Gaussian Blur
+* [x] Loading resource images
 
 > Supported  Platforms
 > * Android
