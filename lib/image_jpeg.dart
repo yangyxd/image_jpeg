@@ -110,6 +110,7 @@ class ImageJpeg {
     return list.where((item) => item is int).map((item) => item as int).toList();
   }
 
+  /// convert List<int> to Uint8List
   static Uint8List convertToUint8List(List<int> list) {
     return Uint8List.fromList(list);
   }
