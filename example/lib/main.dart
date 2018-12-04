@@ -238,7 +238,7 @@ class _MyAppState extends State<MyApp> {
 
   _loadResImage() async {
     var t = new DateTime.now().millisecondsSinceEpoch;
-    var resName = Platform.isIOS ? "test" : "ic_launcher";
+    var resName = Platform.isIOS ? "AppIcon" : "ic_launcher";
     List<int> data = await ImageJpeg.loadResFile(resName);
     var t2 = new DateTime.now().millisecondsSinceEpoch;
     if (data == null || data.isEmpty) {

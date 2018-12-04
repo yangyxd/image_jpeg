@@ -1,3 +1,4 @@
+#import <Flutter/Flutter.h>
 #import "ImageJpegPlugin.h"
 
 @implementation ImageJpegPlugin
@@ -36,38 +37,19 @@
         blurZoom = [sblurZoom intValue];
     } @catch(NSException *e){ }
 
-    if(mw < 0) mw = 0;
-    if(mh < 0) mh = 0;
-    if (quality < 0) quality = 0;
-    if (quality > 100) quality = 100;
-    if (blur < 0) blur = 0;
-    if (blur > 100) blur = 100;
-    if (blurZoom < 0) blurZoom = 0;
-
     if (targetPath == nil || targetPath == NULL || [targetPath isKindOfClass:[NSNull class]]) {
         targetPath = [srcPath  stringByAppendingString: @".jpg"];
     }
 
     UIImage *image = [UIImage imageWithContentsOfFile:srcPath]; // init image
-
-    // 缩放
-    NSNumber *nmw = [NSNumber numberWithInt:mw];
-    NSNumber *nmh = [NSNumber numberWithInt:mh];
-    image = [self scaledImage:image maxWidth:nmw maxHeight:nmh];
-
-    // 旋转
-    if (rotate % 360 != 0){
-        image = [self rotate: image rotate: rotate];
-    }
-
-    // 高斯模糊
-    if (blur > 0) {
-        image = [self blurImage:image blur:blur blurZoom:blurZoom];
-    }
-
-    // 压缩
-    CGFloat compression = quality / 100;
-    NSData *data = UIImageJPEGRepresentation(image, compression);
+    NSData *data = [self processImage:image
+        mw:mw
+        mh:mh
+        rotate:rotate
+        blur:blur
+        blurZoom:blurZoom
+        quality:quality
+    ];
 
     if ([[NSFileManager defaultManager] createFileAtPath:targetPath contents:data attributes:nil]) {
         result(targetPath);
@@ -75,6 +57,67 @@
         result([FlutterError errorWithCode:@"Encode Jpeg Failed"
                                 message:@"Temporary file could not be created"
                                 details:nil]);
+    }
+
+  } else if ([@"encodeJpegWithBuffer" isEqualToString:call.method]) {
+    NSArray *args = call.arguments;
+    FlutterStandardTypedData *list = args[0];
+    int quality = [args[1] intValue];
+    int mw = [args[2] intValue];
+    int mh = [args[3] intValue];
+    int rotate = [args[4] intValue];
+    int blur = [args[5] intValue];
+    int blurZoom = [args[6] intValue];
+
+    NSData *data = [list data];
+    UIImage *image = [[UIImage alloc] initWithData:data];
+
+    NSData *data = [self processImage:image
+        mw:mw
+        mh:mh
+        rotate:rotate
+        blur:blur
+        blurZoom:blurZoom
+        quality:quality
+    ];
+
+    NSMutableArray *array = [NSMutableArray array];
+    Byte *bytes = data.bytes;
+    for (int i = 0; i < data.length; ++i) {
+        [array addObject:@(bytes[i])];
+    }
+    result(array);
+
+  } else if ([@"encodeImageWithRes" isEqualToString:call.method]) {
+    NSArray *args = call.arguments;
+    NSString *resName = args[0];
+    int quality = [args[1] intValue];
+    int mw = [args[2] intValue];
+    int mh = [args[3] intValue];
+    int rotate = [args[4] intValue];
+    int blur = [args[5] intValue];
+    int blurZoom = [args[6] intValue];
+
+    UIImage *image = [UIImage imageNamed:resName];
+
+    if (image == nil || image == NULL || [image isKindOfClass:[NSNull class]]) {
+        result(NULL);
+    } else {
+        NSData *data = [self processImage:image
+            mw:mw
+            mh:mh
+            rotate:rotate
+            blur:blur
+            blurZoom:blurZoom
+            quality:quality
+        ];
+
+        NSMutableArray *array = [NSMutableArray array];
+        Byte *bytes = data.bytes;
+        for (int i = 0; i < data.length; ++i) {
+            [array addObject:@(bytes[i])];
+        }
+        result(array);
     }
 
   } else if ([@"loadResFile" isEqualToString:call.method]) {
@@ -109,6 +152,43 @@
   } else {
     result(FlutterMethodNotImplemented);
   }
+}
+
+- (NSData *)processImage:(UIImage *)image
+    mw: (NSNumber *) mw
+    mh: (NSNumber *) mh
+    rotate: (NSNumber *) rotate
+    blur: (NSNumber *) blur
+    blurZoom: (NSNumber *) blurZoom
+    quality: (NSNumber *) quality
+{
+    if(mw < 0) mw = 0;
+    if(mh < 0) mh = 0;
+    if (quality < 0) quality = 0;
+    if (quality > 100) quality = 100;
+    if (blur < 0) blur = 0;
+    if (blur > 100) blur = 100;
+    if (blurZoom < 0) blurZoom = 0;
+
+    // 缩放
+    NSNumber *nmw = [NSNumber numberWithInt:mw];
+    NSNumber *nmh = [NSNumber numberWithInt:mh];
+    image = [self scaledImage:image maxWidth:nmw maxHeight:nmh];
+
+    // 旋转
+    if (rotate % 360 != 0){
+        image = [self rotate: image rotate: rotate];
+    }
+
+    // 高斯模糊
+    if (blur > 0) {
+        image = [self blurImage:image blur:blur blurZoom:blurZoom];
+    }
+
+    // 压缩
+    CGFloat compression = quality / 100;
+    NSData *data = UIImageJPEGRepresentation(image, compression);
+    return data;
 }
 
 - (UIImage *)scaledImage:(UIImage *)image
