@@ -43,12 +43,12 @@
 
     UIImage *image = [UIImage imageWithContentsOfFile:srcPath]; // init image
     NSData *data = [self processImage:image
-        mw:mw
-        mh:mh
-        rotate:rotate
-        blur:blur
-        blurZoom:blurZoom
-        quality:quality
+                                   mw:mw
+                                   mh:mh
+                               rotate:rotate
+                                 blur:blur
+                             blurZoom:blurZoom
+                              quality:quality
     ];
 
     if ([[NSFileManager defaultManager] createFileAtPath:targetPath contents:data attributes:nil]) {
@@ -69,16 +69,14 @@
     int blur = [args[5] intValue];
     int blurZoom = [args[6] intValue];
 
-    NSData *data = [list data];
-    UIImage *image = [[UIImage alloc] initWithData:data];
-
+    UIImage *image = [[UIImage alloc] initWithData:list.data];
     NSData *data = [self processImage:image
-        mw:mw
-        mh:mh
-        rotate:rotate
-        blur:blur
-        blurZoom:blurZoom
-        quality:quality
+                           mw:mw
+                           mh:mh
+                       rotate:rotate
+                         blur:blur
+                     blurZoom:blurZoom
+                      quality:quality
     ];
 
     NSMutableArray *array = [NSMutableArray array];
@@ -104,12 +102,12 @@
         result(NULL);
     } else {
         NSData *data = [self processImage:image
-            mw:mw
-            mh:mh
-            rotate:rotate
-            blur:blur
-            blurZoom:blurZoom
-            quality:quality
+                                       mw:mw
+                                       mh:mh
+                                   rotate:rotate
+                                     blur:blur
+                                 blurZoom:blurZoom
+                                  quality:quality
         ];
 
         NSMutableArray *array = [NSMutableArray array];
@@ -155,15 +153,15 @@
 }
 
 - (NSData *)processImage:(UIImage *)image
-    mw: (NSNumber *) mw
-    mh: (NSNumber *) mh
-    rotate: (NSNumber *) rotate
-    blur: (NSNumber *) blur
-    blurZoom: (NSNumber *) blurZoom
-    quality: (NSNumber *) quality
+    mw: (int) mw
+    mh: (int) mh
+    rotate: (int) rotate
+    blur: (int) blur
+    blurZoom: (int) blurZoom
+    quality: (int) quality
 {
-    if(mw < 0) mw = 0;
-    if(mh < 0) mh = 0;
+    if (mw < 0) mw = 0;
+    if (mh < 0) mh = 0;
     if (quality < 0) quality = 0;
     if (quality > 100) quality = 100;
     if (blur < 0) blur = 0;
@@ -171,10 +169,12 @@
     if (blurZoom < 0) blurZoom = 0;
 
     // 缩放
-    NSNumber *nmw = [NSNumber numberWithInt:mw];
-    NSNumber *nmh = [NSNumber numberWithInt:mh];
-    image = [self scaledImage:image maxWidth:nmw maxHeight:nmh];
-
+    if (mw > 0 && mh > 0) {
+        NSNumber *nmw = [NSNumber numberWithInt:mw];
+        NSNumber *nmh = [NSNumber numberWithInt:mh];
+        image = [self scaledImage:image maxWidth:nmw maxHeight:nmh];
+    }
+    
     // 旋转
     if (rotate % 360 != 0){
         image = [self rotate: image rotate: rotate];
