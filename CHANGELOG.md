@@ -1,3 +1,7 @@
+## 1.1.1
+
+* Modifying description information
+
 ## 1.1.0
 
 * Add blurImage, loadResImage

@@ -4,7 +4,7 @@
 ![GitHub](https://img.shields.io/github/license/yangyxd/image_jpeg.svg)
 [![GitHub stars](https://img.shields.io/github/stars/yangyxd/image_jpeg.svg?style=social&label=Stars)](https://github.com/yangyxd/image_jpeg)
 
-Flutter plugin image encode jpeg. The compression and zoom plug-in before the image is uploaded. Use native code for processing.
+Flutter plug-in for image compression JPEG upload supports image blurring, rotation processing, and loading resource files and memory images (bytes).
 
 ## Usage
 To use this plugin, add `image_jpeg` as a dependency in your `pubspec.yaml` file.
