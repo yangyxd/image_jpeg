@@ -32,6 +32,21 @@ import 'package:image_jpeg/image_jpeg.dart';
 // 调用 encodeJpeg ，返回输出的文件名
 String newfileName = await ImageJpeg.encodeJpeg(imageFile.path, newfile, 70, JpgImageWidth, JpgImageHeigh);
 
+// 调用encodeImageWithRes从资源文件中加载并处理，返回bytes
+List<int> data = await ImageJpeg.encodeImageWithRes(resName, 70, 'drawable', 1000, 1000,  0, 10, 4);
+
+// 加载资源文件（可以不是图像）
+List<int> data = await ImageJpeg.loadResFile(resName);
+
+// 高斯模糊
+List<int> data = await ImageJpeg.blurImageWithFlie(imageFile.path, 10, 4, 0);
+
+// 获取资源文件信息
+var sv = await ImageJpeg.getResImageInfo(resName);
+
+// 获取文件信息
+var sv = await ImageJpeg.getInfo(imageFile.path);
+
 ```
 
 ## License MIT
